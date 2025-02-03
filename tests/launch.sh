@@ -34,6 +34,9 @@ echo "php extension dir: ${PHP_EXT_DIR}"
 BCMATH_EXT="-d extension=$(find ${PHP_EXT_DIR} -type f -name 'bcmath.so')"
 echo "bcmath found at: ${BCMATH_EXT}"
 
+CURL_EXT="-d extension=$(find ${PHP_EXT_DIR} -type f -name 'curl.so')"
+echo "curl found at: ${CURL_EXT}"
+
 COVERAGE_EXTENSION="-d extension=pcov.so"
 IMAGICK_OR_GD="-dextension=gd.so"
 JSON_EXT="-dextension=json.so"
@@ -49,6 +52,13 @@ if [ "$(${PHP_BINARY} -r 'echo PHP_MAJOR_VERSION;')" = "5" ];then
         IMAGICK_OR_GD="-dextension=imagick.so"
     fi
 
+fi
+
+if [ "$(${PHP_BINARY} -r 'echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;')" = "70" ];then
+    X_DEBUG_EXT="$(find ${PHP_EXT_DIR} -type f -name 'xdebug.so' || '')"
+    echo "Xdebug found at: ${X_DEBUG_EXT}"
+    # pcov does not exist for PHP 7.0
+    COVERAGE_EXTENSION="-d zend_extension=${X_DEBUG_EXT} -d xdebug.mode=coverage"
 fi
 
 # PHP >= 8.x.x
@@ -79,6 +89,7 @@ for file in $EXAMPLE_FILES; do
         -d date.timezone=UTC \
         ${IMAGICK_OR_GD} ${COVERAGE_EXTENSION} \
         ${BCMATH_EXT} \
+        ${CURL_EXT} \
         ${JSON_EXT} \
         ${XML_EXT} \
         -d display_errors=on \
@@ -145,7 +156,9 @@ for file in $EXAMPLE_BARCODE_FILES; do
     ${PHP_BINARY} -n \
         -d include_path="${TEMP_FOLDER}" \
         -d date.timezone=UTC \
-        ${BCMATH_EXT} ${COVERAGE_EXTENSION} \
+        ${BCMATH_EXT} \
+        ${CURL_EXT} \
+        ${COVERAGE_EXTENSION} \
         -d display_errors=on \
         -d error_reporting=-1 \
         -d pcov.directory="${ROOT_DIR}" \
